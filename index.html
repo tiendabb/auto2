@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR: Canon 3D + Video Opcional</title>
+  <title>AR: Prueba con Modelo Público</title>
   <style>
     body, html {
       margin: 0;
@@ -21,13 +21,14 @@
       padding: 10px;
       border-radius: 5px;
       font-size: 14px;
-      pointer-events: none;
       z-index: 100;
     }
-    .status {
-      color: #ffff88;
+    .error {
+      color: red;
       font-size: 12px;
-      margin-top: 5px;
+    }
+    .success {
+      color: #0f0;
     }
   </style>
 
@@ -39,8 +40,9 @@
 
   <!-- Mensaje en pantalla -->
   <div class="info">
-    Apunta al marcador
-    <div id="status" class="status"></div>
+    🔍 Apunta al marcador <strong>marker.patt</strong>
+    <br>
+    <span id="status">Cargando...</span>
   </div>
 
   <!-- Escena AR -->
@@ -51,73 +53,61 @@
     vr-mode-ui="enabled: false"
   >
 
-    <!-- Recursos externos -->
-    <a-assets>
-      <!-- Modelo 3D: canon.glb -->
-      <gltf-model id="asset-model" src="canon.glb"></gltf-model>
+    <!-- Luces -->
+    <a-entity light="type: ambient; color: #ccc;"></a-entity>
+    <a-light type="point" color="#fff" intensity="1.5" distance="10" decay="2" position="0 2 2"></a-light>
 
-      <!-- Video opcional -->
-      <video id="asset-video" src="video.mp4" autoplay loop playsinline crossorigin="anonymous"></video>
+    <!-- Modelo público (no necesitas subir archivo) -->
+    <a-assets>
+      <gltf-model id="duck-model" src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"></gltf-model>
     </a-assets>
 
-    <!-- Marcador: marker.patt -->
+    <!-- Marcador personalizado -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- Contenedor dinámico -->
-      <a-entity id="content"></a-entity>
-
-      <!-- Luz suave -->
-      <a-light type="point" color="#fff" intensity="1.2" distance="5" decay="2" position="0 1.5 1"></a-light>
+      <!-- Contenedor del modelo -->
+      <a-entity id="model-container" position="0 0.2 0"></a-entity>
     </a-marker>
 
     <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- Lógica: carga modelo siempre, video si existe -->
+  <!-- Lógica: carga y animación del modelo -->
   <script>
     window.addEventListener("load", () => {
-      const content = document.getElementById("content");
+      const container = document.getElementById("model-container");
       const status = document.getElementById("status");
-      const model = document.getElementById("asset-model");
-      const video = document.getElementById("asset-video");
 
-      // --- Cargar modelo 3D (siempre) ---
-      const modelEntity = document.createElement("a-entity");
-      modelEntity.setAttribute("gltf-model", "#asset-model");
-      modelEntity.setAttribute("position", "0 0.5 0");
-      modelEntity.setAttribute("scale", "0.3 0.3 0.3");
-      modelEntity.setAttribute("rotation", "0 180 0");
-      modelEntity.setAttribute("animation", {
-        property: "rotation",
-        to: "0 360 0",
-        loop: true,
-        dur: 10000,
-        easing: "linear"
-      });
-      content.appendChild(modelEntity);
+      // Crear entidad del modelo
+      const duck = document.createElement("a-entity");
+      duck.setAttribute("gltf-model", "#duck-model");
+      duck.setAttribute("scale", "0.3 0.3 0.3");
+      duck.setAttribute("rotation", "0 180 0");
 
-      // --- Intentar cargar video ---
-      video.load();
-
-      video.addEventListener("canplaythrough", () => {
-        const videoPlane = document.createElement("a-plane");
-        videoPlane.setAttribute("position", "0 1.2 0");
-        videoPlane.setAttribute("rotation", "-90 0 0"); // plano horizontal
-        videoPlane.setAttribute("width", "1.6");
-        videoPlane.setAttribute("height", "0.9");
-        videoPlane.setAttribute("material", {
-          src: "#asset-video",
-          side: "front"
+      // Cuando el modelo esté cargado → animar
+      duck.addEventListener("model-loaded", () => {
+        status.innerHTML = '<span class="success">✅ Modelo cargado y girando</span>';
+        
+        // Animación de rotación continua
+        duck.setAttribute("animation", {
+          property: "rotation",
+          to: "0 360 0",
+          loop: true,
+          dur: 6000,
+          easing: "linear"
         });
-        content.appendChild(videoPlane);
-        status.textContent = "🎥 Video cargado";
-        console.log("✅ Video listo");
+
+        console.log("🎉 El pato está girando!");
       });
 
-      video.addEventListener("error", () => {
-        status.textContent = "🔇 Video no encontrado";
-        console.warn("⚠️ Video no disponible. Mostrando solo el modelo 3D.");
+      // Si falla la carga
+      duck.addEventListener("model-error", () => {
+        status.innerHTML = '<span class="error">❌ Error: no se cargó el modelo</span>';
+        console.error("❌ No se pudo cargar Duck.glb");
       });
+
+      // Añadir al escenario
+      container.appendChild(duck);
     });
   </script>
 </body>
