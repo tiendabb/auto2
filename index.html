@@ -18,48 +18,54 @@
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
     vr-mode-ui="enabled: false"
     renderer="logarithmicDepthBuffer: true;"
-    >
+  >
     
-    <!-- Modelo 3D que girará automáticamente -->
-    <a-entity
-      id="modelo"
-      gltf-model="https://cdn.jsdelivr.net/gh/tiendabb/auto2@main/busto.glb"
-      scale="0.5 0.5 0.5"
-      position="0 0 0"
-      animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
-    ></a-entity>
+    <!-- Sistema de assets para carga de modelos -->
+    <a-assets>
+      <a-asset-item id="cannon-model" src="https://cdn.jsdelivr.net/gh/tiendabb/auto2@main/canon.glb"></a-asset-item>
+    </a-assets>
 
-    <!-- Marcador personalizado: market.patt -->
+    <!-- Mensaje de carga -->
+    <a-entity id="loading" position="0 1.5 0" text="value: Cargando modelo...; color: white; align: center;"></a-entity>
+
+    <!-- Marcador personalizado -->
     <a-marker type="pattern" preset="custom" url="https://cdn.jsdelivr.net/gh/tiendabb/auto2@main/market.patt">
+      <!-- Contenedor del modelo -->
       <a-entity
         id="model-container"
-        rotation="-90 0 0"  <!-- Ajusta para que el modelo apunte hacia arriba -->
+        rotation="-90 0 0"
+        scale="0.5 0.5 0.5"
       >
         <a-entity
-          gltf-model="#modelo"
+          id="modelo"
+          gltf-model="#cannon-model"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
         ></a-entity>
       </a-entity>
     </a-marker>
-
-    <!-- Mensaje de carga -->
-    <a-entity id="loading" position="0 1.5 0">
-      <a-text value="Cargando modelo..." color="white" align="center"></a-text>
-    </a-entity>
 
     <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Ocultar mensaje cuando el modelo cargue
-    document.getElementById('modelo').addEventListener('model-loaded', () => {
-      console.log('✅ Modelo cargado correctamente');
-      document.getElementById('loading').setAttribute('visible', false);
-    });
+    // Esperar a que A-Frame cargue
+    window.addEventListener('load', () => {
+      const scene = document.querySelector('a-scene');
+      
+      // Cuando el modelo se carga
+      const modelEntity = document.getElementById('modelo');
+      modelEntity.addEventListener('model-loaded', () => {
+        console.log('✅ Modelo cargado correctamente');
+        document.getElementById('loading').setAttribute('visible', false);
+      });
 
-    document.getElementById('modelo').addEventListener('model-error', (e) => {
-      console.error('❌ Error al cargar el modelo:', e);
-      document.getElementById('loading').setAttribute('text', 'value', 'Error: No se cargó el modelo');
+      // Si hay error al cargar
+      modelEntity.addEventListener('model-error', (e) => {
+        console.error('❌ Error al cargar el modelo:', e);
+        const loading = document.getElementById('loading');
+        loading.setAttribute('text', 'value', 'Error: No se cargó el modelo');
+      });
     });
   </script>
 </body>
