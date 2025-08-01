@@ -3,35 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js - Modelo GLB Visible</title>
-
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js  "></script>
-  
-  <!-- AR.js -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js  "></script>
-  
-  <!-- aframe-extras para animaciones (opcional) -->
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js  "></script>
-
+  <title>AR.js - Ejemplo Funcional</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: yellow;
-      font-size: 12px;
-      background: rgba(0,0,0,0.6);
-      padding: 5px;
-      border-radius: 4px;
-      z-index: 100;
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
     }
   </style>
 </head>
-<body>
-  <div id="info">Apunta al marcador</div>
-
+<body style="margin: 0; overflow: hidden;">
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
@@ -39,68 +22,30 @@
   >
     <!-- Marcador personalizado -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- MODELO GLB EXTERNO (funciona SIEMPRE) -->
-      <a-entity
-        id="modelo"
-        scale="0.3 0.3 0.3"
+      <!-- Modelo 3D en formato OBJ o GLTF (usamos un cubo simple aquí) -->
+      <a-box
+        color="tomato"
         position="0 0.5 0"
-        gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/FlightHelmet/glTF/FlightHelmet.glb  "
-        animation-mixer="clip: *; loop: repeat"
-        touch-rotate
+        scale="0.5 0.5 0.5"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear"
       >
-      </a-entity>
+      </a-box>
+      <!-- Texto 3D -->
+      <a-text value="¡Hola AR!" color="yellow" position="0 0.7 0" align="center"></a-text>
     </a-marker>
 
+    <!-- Luz ambiental -->
+    <a-entity light="type: ambient; color: #bbb"></a-entity>
+    <!-- Luz direccional -->
+    <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 1 1"></a-entity>
+
+    <!-- Cursor para interacción (opcional) -->
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Evitar scroll
-    document.body.ontouchmove = function(e) { e.preventDefault(); };
-
-    // Componente: rotar con el dedo
-    AFRAME.registerComponent('touch-rotate', {
-      init: function () {
-        this.touchStartX = null;
-        const el = this.el;
-
-        this.onTouchStart = (e) => {
-          if (e.touches.length === 1) {
-            this.touchStartX = e.touches[0].clientX;
-          }
-        };
-
-        this.onTouchMove = (e) => {
-          if (this.touchStartX !== null && e.touches.length === 1) {
-            const diffX = e.touches[0].clientX - this.touchStartX;
-            el.object3D.rotation.y += diffX * 0.01;
-            this.touchStartX = e.touches[0].clientX;
-          }
-        };
-
-        this.onTouchEnd = () => {
-          this.touchStartX = null;
-        };
-
-        const scene = this.el.sceneEl;
-        scene.canvas.addEventListener('touchstart', this.onTouchStart, false);
-        scene.canvas.addEventListener('touchmove', this.onTouchMove, false);
-        scene.canvas.addEventListener('touchend', this.onTouchEnd, false);
-      },
-      remove: function () {
-        const scene = this.el.sceneEl;
-        scene.canvas.removeEventListener('touchstart', this.onTouchStart);
-        scene.canvas.removeEventListener('touchmove', this.onTouchMove);
-        scene.canvas.removeEventListener('touchend', this.onTouchEnd);
-      }
-    });
-
-    // Depuración
-    window.addEventListener('load', () => {
-      const model = document.getElementById('modelo');
-      model.addEventListener('model-loaded', () => console.log('✅ Modelo cargado'));
-      model.addEventListener('model-error', (e) => console.error('❌ Error al cargar modelo:', e.detail));
-    });
+    // Evita que el usuario salga accidentalmente del modo AR
+    document.body.ontouchmove = function (e) { e.preventDefault(); };
   </script>
 </body>
 </html>
