@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js - Modelo GLB Animado</title>
-  <!-- A-Frame -->
+  <title>AR.js - Modelo GLB desde GitHub</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- AR.js -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>
     body {
@@ -16,25 +14,26 @@
     }
   </style>
 </head>
-<body style="margin: 0; overflow: hidden;">
+<body>
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     vr-mode-ui="enabled: false"
   >
-    <!-- Marcador personalizado -->
+    <!-- Marcador -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- Modelo GLB animado -->
+      <!-- Modelo GLB desde GitHub usando jsDelivr -->
       <a-entity
-        gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/AnimatedCube/glTF-Binary/AnimatedCube.glb"
+        id="modelo-glb"
+        gltf-model="https://cdn.jsdelivr.net/gh/tiendabb/auto2@main/canon.glb"
         position="0 0.5 0"
         scale="0.3 0.3 0.3"
-        animation-mixer
+        animation-mixer="clip: *"
       >
       </a-entity>
 
-      <!-- Texto 3D -->
-      <a-text value="¡Modelo GLB Animado!" color="yellow" position="0 1.2 0" align="center"></a-text>
+      <!-- Texto -->
+      <a-text value="Modelo AR" color="yellow" position="0 1.2 0" align="center"></a-text>
     </a-marker>
 
     <!-- Luces -->
@@ -46,8 +45,31 @@
   </a-scene>
 
   <script>
-    // Evita scroll accidental
-    document.body.ontouchmove = function (e) { e.preventDefault(); };
+    // Evitar scroll
+    document.body.ontouchmove = (e) => e.preventDefault();
+
+    // Después de que el modelo cargue, verificar si tiene animaciones
+    const modelo = document.getElementById('modelo-glb');
+
+    modelo.addEventListener('model-loaded', (event) => {
+      const { model } = event.detail;
+      const animations = model.animations;
+
+      if (animations && animations.length > 0) {
+        console.log('✅ Animación encontrada en el modelo GLB');
+        // animation-mixer ya la está reproduciendo
+      } else {
+        console.log('❌ No hay animación. Aplicando rotación automática...');
+        // Añadir animación de rotación si no hay animaciones
+        modelo.setAttribute('animation', {
+          property: 'rotation',
+          to: '0 360 0',
+          loop: true,
+          dur: 5000,
+          easing: 'linear'
+        });
+      }
+    });
   </script>
 </body>
 </html>
