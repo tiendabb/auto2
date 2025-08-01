@@ -2,123 +2,123 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js - Modelo canon.glb desde GitHub</title>
-
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  
-  <!-- AR.js -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  
-  <!-- aframe-extras para animaciones (opcional) -->
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR: Canon 3D + Video Opcional</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    #info {
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    .info {
       position: absolute;
       top: 10px;
       left: 10px;
-      color: yellow;
-      font-size: 12px;
-      background: rgba(0,0,0,0.6);
-      padding: 5px;
-      border-radius: 4px;
+      color: white;
+      font-family: Arial, sans-serif;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      pointer-events: none;
       z-index: 100;
     }
+    .status {
+      color: #ffff88;
+      font-size: 12px;
+      margin-top: 5px;
+    }
   </style>
+
+  <!-- A-Frame + AR.js -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://unpkg.com/ar.js/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
-  <div id="info">Apunta al marcador</div>
 
+  <!-- Mensaje en pantalla -->
+  <div class="info">
+    Apunta al marcador
+    <div id="status" class="status"></div>
+  </div>
+
+  <!-- Escena AR -->
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true;"
-    background="color: #000"
   >
-    <!-- Marcador personalizado (asegúrate de tener marker.patt en tu repo) -->
+
+    <!-- Recursos externos -->
+    <a-assets>
+      <!-- Modelo 3D: canon.glb -->
+      <gltf-model id="asset-model" src="canon.glb"></gltf-model>
+
+      <!-- Video opcional -->
+      <video id="asset-video" src="video.mp4" autoplay loop playsinline crossorigin="anonymous"></video>
+    </a-assets>
+
+    <!-- Marcador: marker.patt -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- MODELO GLB desde GitHub (ajusta la URL a tu usuario y repo) -->
-      <a-entity
-        id="modelo"
-        scale="0.3 0.3 0.3"
-        position="0 0.5 0"
-        gltf-model="https://raw.githubusercontent.com/tiendabb/auto2/main/canon.glb"
-        animation-mixer="clip: *; loop: repeat"
-        touch-rotate
-      >
-      </a-entity>
+      <!-- Contenedor dinámico -->
+      <a-entity id="content"></a-entity>
+
+      <!-- Luz suave -->
+      <a-light type="point" color="#fff" intensity="1.2" distance="5" decay="2" position="0 1.5 1"></a-light>
     </a-marker>
 
+    <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
+  <!-- Lógica: carga modelo siempre, video si existe -->
   <script>
-    // Evitar scroll
-    document.body.ontouchmove = function(e) { e.preventDefault(); };
+    window.addEventListener("load", () => {
+      const content = document.getElementById("content");
+      const status = document.getElementById("status");
+      const model = document.getElementById("asset-model");
+      const video = document.getElementById("asset-video");
 
-    // Componente personalizado: rotar con el dedo
-    AFRAME.registerComponent('touch-rotate', {
-      init: function () {
-        this.touchStartX = null;
-        const el = this.el;
+      // --- Cargar modelo 3D (siempre) ---
+      const modelEntity = document.createElement("a-entity");
+      modelEntity.setAttribute("gltf-model", "#asset-model");
+      modelEntity.setAttribute("position", "0 0.5 0");
+      modelEntity.setAttribute("scale", "0.3 0.3 0.3");
+      modelEntity.setAttribute("rotation", "0 180 0");
+      modelEntity.setAttribute("animation", {
+        property: "rotation",
+        to: "0 360 0",
+        loop: true,
+        dur: 10000,
+        easing: "linear"
+      });
+      content.appendChild(modelEntity);
 
-        this.onTouchStart = (e) => {
-          if (e.touches.length === 1) {
-            this.touchStartX = e.touches[0].clientX;
-          }
-        };
+      // --- Intentar cargar video ---
+      video.load();
 
-        this.onTouchMove = (e) => {
-          if (this.touchStartX !== null && e.touches.length === 1) {
-            const diffX = e.touches[0].clientX - this.touchStartX;
-            el.object3D.rotation.y += diffX * 0.01;
-            this.touchStartX = e.touches[0].clientX;
-          }
-        };
-
-        this.onTouchEnd = () => {
-          this.touchStartX = null;
-        };
-
-        const scene = this.el.sceneEl;
-        if (scene && scene.canvas) {
-          scene.canvas.addEventListener('touchstart', this.onTouchStart, false);
-          scene.canvas.addEventListener('touchmove', this.onTouchMove, false);
-          scene.canvas.addEventListener('touchend', this.onTouchEnd, false);
-        }
-      },
-      remove: function () {
-        const scene = this.el.sceneEl;
-        if (scene && scene.canvas) {
-          scene.canvas.removeEventListener('touchstart', this.onTouchStart);
-          scene.canvas.removeEventListener('touchmove', this.onTouchMove);
-          scene.canvas.removeEventListener('touchend', this.onTouchEnd);
-        }
-      }
-    });
-
-    // Depuración: detectar si el modelo se carga o falla
-    window.addEventListener('load', () => {
-      const model = document.getElementById('modelo');
-      
-      if (!model) {
-        console.error('❌ No se encontró el modelo con id="modelo"');
-        return;
-      }
-
-      model.addEventListener('model-loaded', () => {
-        console.log('✅ Modelo canon.glb cargado correctamente');
+      video.addEventListener("canplaythrough", () => {
+        const videoPlane = document.createElement("a-plane");
+        videoPlane.setAttribute("position", "0 1.2 0");
+        videoPlane.setAttribute("rotation", "-90 0 0"); // plano horizontal
+        videoPlane.setAttribute("width", "1.6");
+        videoPlane.setAttribute("height", "0.9");
+        videoPlane.setAttribute("material", {
+          src: "#asset-video",
+          side: "front"
+        });
+        content.appendChild(videoPlane);
+        status.textContent = "🎥 Video cargado";
+        console.log("✅ Video listo");
       });
 
-      model.addEventListener('model-error', (e) => {
-        console.error('❌ Error al cargar el modelo:', e.detail);
+      video.addEventListener("error", () => {
+        status.textContent = "🔇 Video no encontrado";
+        console.warn("⚠️ Video no disponible. Mostrando solo el modelo 3D.");
       });
     });
   </script>
 </body>
 </html>
-
