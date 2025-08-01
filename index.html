@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js - Modelo cutlass71.glb</title>
+  <title>AR.js - Modelo canon.glb desde GitHub</title>
 
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -11,7 +11,7 @@
   <!-- AR.js -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
-  <!-- aframe-extras (para animaciones) -->
+  <!-- aframe-extras para animaciones (opcional) -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
   <style>
@@ -21,49 +21,46 @@
       top: 10px;
       left: 10px;
       color: yellow;
-      font-family: Arial, sans-serif;
       font-size: 12px;
       background: rgba(0,0,0,0.6);
-      padding: 8px;
+      padding: 5px;
       border-radius: 4px;
       z-index: 100;
-      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <!-- Mensaje de ayuda -->
-  <div id="info">🔍 Apunta al marcador<br>🔄 Toca y arrastra para girar</div>
+  <div id="info">Apunta al marcador</div>
 
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true;"
+    background="color: #000"
   >
-    <!-- Marcador personalizado -->
+    <!-- Marcador personalizado (asegúrate de tener marker.patt en tu repo) -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- Modelo 3D: cutlass71.glb (en raíz) -->
+      <!-- MODELO GLB desde GitHub (ajusta la URL a tu usuario y repo) -->
       <a-entity
-        id="car-model"
-        scale="0.01 0.01 0.01"  <!-- Ajusta escala según tu modelo -->
-        position="0 0 0"
-        gltf-model="canon.glb"
-        animation-mixer="clip: *; loop: repeat; timeScale: 1.0"
+        id="modelo"
+        scale="0.3 0.3 0.3"
+        position="0 0.5 0"
+        gltf-model="https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/canon.glb"
+        animation-mixer="clip: *; loop: repeat"
         touch-rotate
       >
       </a-entity>
     </a-marker>
 
-    <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- Componente personalizado: rotación táctil -->
   <script>
     // Evitar scroll
     document.body.ontouchmove = function(e) { e.preventDefault(); };
 
-    // Componente: rotar con un dedo
+    // Componente personalizado: rotar con el dedo
     AFRAME.registerComponent('touch-rotate', {
       init: function () {
         this.touchStartX = null;
@@ -88,35 +85,37 @@
         };
 
         const scene = this.el.sceneEl;
-        scene.canvas.addEventListener('touchstart', this.onTouchStart, false);
-        scene.canvas.addEventListener('touchmove', this.onTouchMove, false);
-        scene.canvas.addEventListener('touchend', this.onTouchEnd, false);
+        if (scene && scene.canvas) {
+          scene.canvas.addEventListener('touchstart', this.onTouchStart, false);
+          scene.canvas.addEventListener('touchmove', this.onTouchMove, false);
+          scene.canvas.addEventListener('touchend', this.onTouchEnd, false);
+        }
       },
       remove: function () {
         const scene = this.el.sceneEl;
-        scene.canvas.removeEventListener('touchstart', this.onTouchStart);
-        scene.canvas.removeEventListener('touchmove', this.onTouchMove);
-        scene.canvas.removeEventListener('touchend', this.onTouchEnd);
+        if (scene && scene.canvas) {
+          scene.canvas.removeEventListener('touchstart', this.onTouchStart);
+          scene.canvas.removeEventListener('touchmove', this.onTouchMove);
+          scene.canvas.removeEventListener('touchend', this.onTouchEnd);
+        }
       }
     });
 
-    // Depuración: errores y carga
+    // Depuración: detectar si el modelo se carga o falla
     window.addEventListener('load', () => {
-      const modelEl = document.getElementById('car-model');
+      const model = document.getElementById('modelo');
+      
+      if (!model) {
+        console.error('❌ No se encontró el modelo con id="modelo"');
+        return;
+      }
 
-      modelEl.addEventListener('model-loaded', (ev) => {
-        console.log('✅ Modelo cargado:', ev.detail.model);
-        const animations = ev.detail.model.animations;
-        if (animations && animations.length > 0) {
-          console.log(`🎬 ${animations.length} animaciones encontradas`);
-        } else {
-          console.log('ℹ️  Modelo sin animaciones');
-        }
+      model.addEventListener('model-loaded', () => {
+        console.log('✅ Modelo canon.glb cargado correctamente');
       });
 
-      modelEl.addEventListener('model-error', (ev) => {
-        console.error('❌ Error al cargar el modelo:', ev.detail);
-        alert("Error: No se pudo cargar cutlass71.glb. Revisa el nombre o formato.");
+      model.addEventListener('model-error', (e) => {
+        console.error('❌ Error al cargar el modelo:', e.detail);
       });
     });
   </script>
