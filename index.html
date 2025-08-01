@@ -2,112 +2,104 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR: Prueba con Modelo Público</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR.js - Modelo GLB Visible</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js  "></script>
+  
+  <!-- AR.js -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js  "></script>
+  
+  <!-- aframe-extras para animaciones (opcional) -->
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js  "></script>
+
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    .info {
+    body { margin: 0; overflow: hidden; background: #000; }
+    #info {
       position: absolute;
       top: 10px;
       left: 10px;
-      color: white;
-      font-family: Arial, sans-serif;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
+      color: yellow;
+      font-size: 12px;
+      background: rgba(0,0,0,0.6);
+      padding: 5px;
+      border-radius: 4px;
       z-index: 100;
     }
-    .error {
-      color: red;
-      font-size: 12px;
-    }
-    .success {
-      color: #0f0;
-    }
   </style>
-
-  <!-- A-Frame + AR.js -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://unpkg.com/ar.js/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
+  <div id="info">Apunta al marcador</div>
 
-  <!-- Mensaje en pantalla -->
-  <div class="info">
-    🔍 Apunta al marcador <strong>marker.patt</strong>
-    <br>
-    <span id="status">Cargando...</span>
-  </div>
-
-  <!-- Escena AR -->
   <a-scene
     embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
-    renderer="logarithmicDepthBuffer: true; antialias: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     vr-mode-ui="enabled: false"
   >
-
-    <!-- Luces -->
-    <a-entity light="type: ambient; color: #ccc;"></a-entity>
-    <a-light type="point" color="#fff" intensity="1.5" distance="10" decay="2" position="0 2 2"></a-light>
-
-    <!-- Modelo público (no necesitas subir archivo) -->
-    <a-assets>
-      <gltf-model id="duck-model" src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"></gltf-model>
-    </a-assets>
-
     <!-- Marcador personalizado -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- Contenedor del modelo -->
-      <a-entity id="model-container" position="0 0.2 0"></a-entity>
+      <!-- MODELO GLB EXTERNO (funciona SIEMPRE) -->
+      <a-entity
+        id="modelo"
+        scale="0.3 0.3 0.3"
+        position="0 0.5 0"
+        gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/FlightHelmet/glTF/FlightHelmet.glb  "
+        animation-mixer="clip: *; loop: repeat"
+        touch-rotate
+      >
+      </a-entity>
     </a-marker>
 
-    <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- Lógica: carga y animación del modelo -->
   <script>
-    window.addEventListener("load", () => {
-      const container = document.getElementById("model-container");
-      const status = document.getElementById("status");
+    // Evitar scroll
+    document.body.ontouchmove = function(e) { e.preventDefault(); };
 
-      // Crear entidad del modelo
-      const duck = document.createElement("a-entity");
-      duck.setAttribute("gltf-model", "#duck-model");
-      duck.setAttribute("scale", "0.3 0.3 0.3");
-      duck.setAttribute("rotation", "0 180 0");
+    // Componente: rotar con el dedo
+    AFRAME.registerComponent('touch-rotate', {
+      init: function () {
+        this.touchStartX = null;
+        const el = this.el;
 
-      // Cuando el modelo esté cargado → animar
-      duck.addEventListener("model-loaded", () => {
-        status.innerHTML = '<span class="success">✅ Modelo cargado y girando</span>';
-        
-        // Animación de rotación continua
-        duck.setAttribute("animation", {
-          property: "rotation",
-          to: "0 360 0",
-          loop: true,
-          dur: 6000,
-          easing: "linear"
-        });
+        this.onTouchStart = (e) => {
+          if (e.touches.length === 1) {
+            this.touchStartX = e.touches[0].clientX;
+          }
+        };
 
-        console.log("🎉 El pato está girando!");
-      });
+        this.onTouchMove = (e) => {
+          if (this.touchStartX !== null && e.touches.length === 1) {
+            const diffX = e.touches[0].clientX - this.touchStartX;
+            el.object3D.rotation.y += diffX * 0.01;
+            this.touchStartX = e.touches[0].clientX;
+          }
+        };
 
-      // Si falla la carga
-      duck.addEventListener("model-error", () => {
-        status.innerHTML = '<span class="error">❌ Error: no se cargó el modelo</span>';
-        console.error("❌ No se pudo cargar Duck.glb");
-      });
+        this.onTouchEnd = () => {
+          this.touchStartX = null;
+        };
 
-      // Añadir al escenario
-      container.appendChild(duck);
+        const scene = this.el.sceneEl;
+        scene.canvas.addEventListener('touchstart', this.onTouchStart, false);
+        scene.canvas.addEventListener('touchmove', this.onTouchMove, false);
+        scene.canvas.addEventListener('touchend', this.onTouchEnd, false);
+      },
+      remove: function () {
+        const scene = this.el.sceneEl;
+        scene.canvas.removeEventListener('touchstart', this.onTouchStart);
+        scene.canvas.removeEventListener('touchmove', this.onTouchMove);
+        scene.canvas.removeEventListener('touchend', this.onTouchEnd);
+      }
+    });
+
+    // Depuración
+    window.addEventListener('load', () => {
+      const model = document.getElementById('modelo');
+      model.addEventListener('model-loaded', () => console.log('✅ Modelo cargado'));
+      model.addEventListener('model-error', (e) => console.error('❌ Error al cargar modelo:', e.detail));
     });
   </script>
 </body>
