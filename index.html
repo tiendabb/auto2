@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js - Ejemplo Funcional</title>
+  <title>AR.js - Modelo GLB Animado</title>
+  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <!-- AR.js -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>
     body {
@@ -22,29 +24,29 @@
   >
     <!-- Marcador personalizado -->
     <a-marker type="pattern" url="marker.patt">
-      <!-- Modelo 3D en formato OBJ o GLTF (usamos un cubo simple aquí) -->
-      <a-box
-        color="tomato"
+      <!-- Modelo GLB animado -->
+      <a-entity
+        gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/AnimatedCube/glTF-Binary/AnimatedCube.glb"
         position="0 0.5 0"
-        scale="0.5 0.5 0.5"
-        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear"
+        scale="0.3 0.3 0.3"
+        animation-mixer
       >
-      </a-box>
+      </a-entity>
+
       <!-- Texto 3D -->
-      <a-text value="¡Hola AR!" color="yellow" position="0 0.7 0" align="center"></a-text>
+      <a-text value="¡Modelo GLB Animado!" color="yellow" position="0 1.2 0" align="center"></a-text>
     </a-marker>
 
-    <!-- Luz ambiental -->
+    <!-- Luces -->
     <a-entity light="type: ambient; color: #bbb"></a-entity>
-    <!-- Luz direccional -->
     <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 1 1"></a-entity>
 
-    <!-- Cursor para interacción (opcional) -->
+    <!-- Cámara -->
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Evita que el usuario salga accidentalmente del modo AR
+    // Evita scroll accidental
     document.body.ontouchmove = function (e) { e.preventDefault(); };
   </script>
 </body>
